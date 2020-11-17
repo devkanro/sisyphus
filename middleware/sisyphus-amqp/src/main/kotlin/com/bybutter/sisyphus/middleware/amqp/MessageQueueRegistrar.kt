@@ -52,13 +52,6 @@ class MessageQueueRegistrar : BeanDefinitionRegistryPostProcessor, EnvironmentAw
             }.beanDefinition
             connectionDefinition.addQualifier(AutowireCandidateQualifier(property.qualifier))
             registry.registerBeanDefinition(connectionName, connectionDefinition)
-
-            val messageQueuePropertyName = "${name}QueueProperty"
-            val messageQueueProperty = BeanDefinitionBuilder.genericBeanDefinition(MessageQueueProperty::class.java) {
-                property
-            }.beanDefinition
-            messageQueueProperty.addQualifier(AutowireCandidateQualifier(property.qualifier))
-            registry.registerBeanDefinition(messageQueuePropertyName, messageQueueProperty)
         }
     }
 
