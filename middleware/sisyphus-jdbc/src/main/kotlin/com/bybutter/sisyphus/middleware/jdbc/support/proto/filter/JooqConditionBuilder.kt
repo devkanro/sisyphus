@@ -2,158 +2,128 @@ package com.bybutter.sisyphus.middleware.jdbc.support.proto.filter
 
 import com.bybutter.sisyphus.dsl.filtering.FilterRuntime
 import com.bybutter.sisyphus.dsl.filtering.grammar.FilterParser
+import com.bybutter.sisyphus.string.unescape
 import org.jooq.Condition
+import org.jooq.Field
 import org.jooq.impl.DSL
+import java.lang.IllegalStateException
+
+interface FilterExpressionValue<T> {
+    val value: T
+}
+
+data class IntValue(override val value: Long) : FilterExpressionValue<Long>
+
+data class UIntValue(override val value: ULong) : FilterExpressionValue<ULong>
+
+data class FloatValue(override val value: Double) : FilterExpressionValue<Double>
+
+data class StringValue(override val value: String) : FilterExpressionValue<String>
+
+data class BooleanValue(override val value: Boolean) : FilterExpressionValue<Boolean>
+
+data class FieldValue(override val value: Field<*>) : FilterExpressionValue<Field<*>>
 
 abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()) {
     fun visit(filter: FilterParser.FilterContext): Condition? {
         return visit(filter.e ?: return null)
     }
 
-    protected open fun visit(expr: FilterParser.ExpressionContext): Condition {
-        return expr.seq.fold<FilterParser.SequenceContext, Condition?>(null) { r, i ->
-            if (r == null) return@fold visit(i).conditioned()
-            val right = visit(i).conditioned() ?: return@fold r
-            r.and(right)
-        }!!
-    }
-
-    protected open fun visit(seq: FilterParser.SequenceContext): Condition {
-        return seq.e.fold<FilterParser.FactorContext, Condition?>(null) { r, i ->
-            if (r == null) return@fold visit(i).conditioned()
-            val right = visit(i).conditioned() ?: return@fold r
-            r.and(right)
-        }!!
-    }
-
-    protected open fun visit(fac: FilterParser.FactorContext): Condition {
-        return fac.e.fold<FilterParser.TermContext, Condition?>(null) { r, i ->
-            if (r == null) return@fold visit(i)?.conditioned()
-            val right = visit(i)?.conditioned() ?: return@fold r
-            r.or(right)
-        }!!
-    }
-
-    private fun Any?.conditioned(): Condition? {
-        return when (this) {
-            is Condition -> this
-            is Boolean -> if (this) DSL.trueCondition() else DSL.falseCondition()
-            else -> null
+    protected open fun visit(expr: FilterParser.ExpressionContext): Condition? {
+        return expr.seq.fold(visit(expr.init)) { cond, seq ->
+            cond?.and(visit(seq))
         }
     }
 
-    protected open fun visit(term: FilterParser.TermContext): Any? {
-        val result = visit(term.simple())
+    protected open fun visit(seq: FilterParser.SequenceContext): Condition? {
+        return seq.e.fold(visit(seq.init)) { cond, e ->
+            cond?.and(visit(e))
+        }
+    }
 
-        return when (term.op?.text) {
-            "-" -> {
-                when (result) {
-                    is Condition -> result.not()
-                    is Boolean -> !result
-                    is Int -> -result
-                    is UInt -> (-result.toLong()).toInt()
-                    is Long -> -result
-                    is ULong -> -result.toLong()
-                    is String -> result.toDoubleOrNull()?.let { -it } ?: true
-                    null -> true
-                    else -> 0
-                }
+    protected open fun visit(factor: FilterParser.FactorContext): Condition? {
+        return factor.e.fold(visit(factor.init)) { cond, e ->
+            cond?.and(visit(e))
+        }
+    }
+
+    protected open fun visit(condition: FilterParser.ConditionContext): Condition? {
+        return when (condition) {
+            is FilterParser.NotConditionContext -> {
+                visit(condition.expression())?.not()
             }
-            "NOT" -> {
-                when (result) {
-                    is Condition -> result.not()
-                    is Boolean -> !result
-                    is String -> !result.toBoolean()
-                    null -> true
-                    else -> null
-                }
+            is FilterParser.CompareConditionContext -> {
+                val field = visit(condition.left)
+                val value = visit(condition.right)
+                val op = condition.comparator().text
+                buildCondition(field, op, resolveValue(field, value))
             }
-            null -> result
-            else -> null
+            else -> throw IllegalStateException()
         }
     }
 
-    protected open fun visit(simple: FilterParser.SimpleContext): Any? {
-        return when (simple) {
-            is FilterParser.RestrictionExprContext -> {
-                visit(simple.restriction())
-            }
-            is FilterParser.CompositeExprContext -> {
-                visit(simple.composite())
-            }
-            else -> throw UnsupportedOperationException("Unsupported simple expression '${simple.text}'.")
-        }
+    protected open fun visit(member: FilterParser.MemberContext): Field<*>? {
+        return resolveMember(member.text)
     }
 
-    protected open fun visit(rest: FilterParser.RestrictionContext): Any? {
-        val left = visit(rest.left)
-        if (rest.op == null) {
-            return when (left) {
-                is Condition -> left
-                is Boolean -> left
-                else -> throw IllegalArgumentException("Result of restriction must be boolean or Condition.")
-            }
-        }
-
-        return buildCondition(left as String, rest.op.text, visit(rest.right) as String)
-    }
-
-    protected open fun visit(com: FilterParser.ComparableContext): Any? {
-        return when (com) {
-            is FilterParser.FucntionExprContext -> visit(com.function())
-            is FilterParser.MemberExprContext -> visit(com.member())
-            else -> throw UnsupportedOperationException("Unsupported comparable expression '${com.text}'.")
-        }
-    }
-
-    protected open fun visit(com: FilterParser.FunctionContext): Any? {
-        val function = com.n.joinToString(".") { it.text }
-        return runtime.invoke(function, com.argList()?.e?.map { visit(it) } ?: listOf())
-    }
-
-    protected open fun visit(member: FilterParser.MemberContext): String {
-        val part = mutableListOf(visit(member.value()))
-        part += member.e.map { visit(it) }
-        return part.joinToString(".")
-    }
-
-    protected open fun visit(field: FilterParser.FieldContext): String {
-        return field.value()?.let { visit(it) } ?: field.text
-    }
-
-    protected open fun visit(value: FilterParser.ValueContext): String? {
-        if (value.STRING() != null) {
-            return string(value.text)
-        }
-
-        if (value.TEXT() != null) {
-            if (value.text == "null") return null
-            return value.text
-        }
-
+    protected open fun visit(value: FilterParser.ValueContext): FilterExpressionValue<*>? {
+        value.member()?.let { return visit(it)?.let { FieldValue(it) } }
+        value.literal()?.let { return visit(it) }
+        value.function()?.let { return visit(it) }
         return null
     }
 
-    protected open fun visit(arg: FilterParser.ArgContext): Any? {
-        return when (arg) {
-            is FilterParser.ArgComparableExprContext -> visit(arg.comparable())
-            is FilterParser.ArgCompositeExprContext -> visit(arg.composite())
-            else -> throw UnsupportedOperationException("Unsupported arg expression '${arg.text}'.")
+    protected open fun visit(function: FilterParser.FunctionContext): FilterExpressionValue<*>? {
+        TODO()
+    }
+
+    protected open fun visit(literal: FilterParser.LiteralContext): FilterExpressionValue<*>? {
+        return when (literal) {
+            is FilterParser.IntContext -> IntValue(literal.text.toLong())
+            is FilterParser.UintContext -> UIntValue(literal.text.substring(0, literal.text.length - 1).toULong())
+            is FilterParser.DoubleContext -> FloatValue(literal.text.toDouble())
+            is FilterParser.StringContext -> StringValue(visit(literal))
+            is FilterParser.BoolTrueContext -> BooleanValue(true)
+            is FilterParser.BoolFalseContext -> BooleanValue(false)
+            is FilterParser.NullContext -> null
+            else -> throw UnsupportedOperationException("Unsupported literal expression '${literal.text}'.")
         }
     }
 
-    protected open fun visit(com: FilterParser.CompositeContext): Any? {
-        return visit(com.expression())
-    }
-
-    private fun string(data: String): String {
+    protected open fun visit(value: FilterParser.StringContext): String {
+        val string = value.text
         return when {
-            data.startsWith("\"\"\"") -> data.substring(3, data.length - 3)
-            data.startsWith("\"") -> data.substring(1, data.length - 1)
-            data.startsWith("'") -> data.substring(1, data.length - 1)
-            else -> throw IllegalStateException("Wrong string token '$data'.")
+            string.startsWith("\"") -> string.substring(1, string.length - 1)
+            string.startsWith("'") -> string.substring(1, string.length - 1)
+            else -> throw IllegalStateException("Wrong string token '${value.text}'.")
+        }.unescape()
+    }
+
+    protected open fun buildCondition(field: Field<*>?, op: String, value: Any?): Condition? {
+        val field = field as? Field<Any> ?: return null
+        return when (op) {
+            "<=" -> field.le(value)
+            "<" -> field.lt(value)
+            ">=" -> field.ge(value)
+            ">" -> field.gt(value)
+            "=" -> field.eq(value ?: return field.isNull)
+            "!=" -> field.ne(value ?: return field.isNotNull)
+            ":" -> {
+                if (value == null) return field.isNull
+                val value = value.toString()
+                if (value == "*") return field.isNotNull
+                if (value.startsWith("*") || value.endsWith("*")) {
+                    return field.like(value.replace('*', '%'))
+                }
+                field.eq(value)
+            }
+            else -> TODO()
         }
     }
 
-    abstract fun buildCondition(name: String, op: String, value: String): Condition?
+    abstract fun resolveMember(member: String): Field<*>?
+
+    open fun resolveValue(field: Field<*>?, value: FilterExpressionValue<*>?): Any? {
+        return value?.value
+    }
 }
