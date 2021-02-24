@@ -21,6 +21,7 @@ import com.bybutter.sisyphus.protobuf.primitives.UInt64Value
 import com.bybutter.sisyphus.protobuf.primitives.Value
 import com.bybutter.sisyphus.protobuf.primitives.string
 import com.bybutter.sisyphus.security.base64
+import com.bybutter.sisyphus.string.unescape
 
 class MessageFilter(filter: String, val runtime: FilterRuntime = FilterRuntime()) : (Message<*, *>) -> Boolean {
     private val filter: FilterParser.FilterContext = FilterDsl.parse(filter)
@@ -35,189 +36,131 @@ class MessageFilter(filter: String, val runtime: FilterRuntime = FilterRuntime()
     }
 
     private fun visit(message: Message<*, *>, expr: FilterParser.ExpressionContext): Boolean {
-        for (seq in expr.seq) {
-            if (!visit(message, seq)) {
-                return false
-            }
+        return expr.seq.fold(visit(message, expr.init)) { cond, seq ->
+            cond.and(visit(message, seq))
         }
-        return true
     }
 
     private fun visit(message: Message<*, *>, seq: FilterParser.SequenceContext): Boolean {
-        for (e in seq.e) {
-            if (!visit(message, e)) {
-                return false
-            }
+        return seq.e.fold(visit(message, seq.init)) { cond, e ->
+            cond.and(visit(message, e))
         }
-        return true
     }
 
-    private fun visit(message: Message<*, *>, fac: FilterParser.FactorContext): Boolean {
-        for (e in fac.e) {
-            if (visit(message, e)) {
-                return true
-            }
+    private fun visit(message: Message<*, *>, factor: FilterParser.FactorContext): Boolean {
+        return factor.e.fold(visit(message, factor.init)) { cond, e ->
+            cond.or(visit(message, e))
         }
-        return false
     }
 
-    private fun visit(message: Message<*, *>, term: FilterParser.TermContext): Boolean {
-        var value = visit(message, term.simple())
-        value = when (term.op?.text) {
-            "NOT" -> {
-                when (value) {
-                    is Boolean -> !value
-                    is String -> !value.toBoolean()
-                    null -> true
+    private fun visit(message: Message<*, *>, condition: FilterParser.ConditionContext): Boolean {
+        return when (condition) {
+            is FilterParser.NotConditionContext -> {
+                !visit(message, condition)
+            }
+            is FilterParser.CompareConditionContext -> {
+                val left = visit(message, condition.left) ?: return false
+                val right = visit(message, condition.right) ?: return false
+                val op = condition.comparator().text ?: return false
+                calculation(left, op, right)
+            }
+            else -> false
+        }
+    }
+
+    private fun calculation(left: Any, op: String, right: Any): Boolean {
+        return when (op) {
+            "<=", "<", ">", ">=" -> {
+                val result = DynamicOperator.compare(left.toString(), right.toString())
+                when (op) {
+                    "<=" -> result <= 0
+                    "<" -> result < 0
+                    ">=" -> result >= 0
+                    ">" -> result > 0
                     else -> false
                 }
             }
-            "-" -> {
-                when (value) {
-                    is Boolean -> !value
-                    is Int -> -value
-                    is UInt -> (-value.toLong()).toInt()
-                    is Long -> -value
-                    is ULong -> -value.toLong()
-                    is String -> value.toDoubleOrNull()?.let { -it } ?: true
-                    null -> true
-                    else -> 0
-                }
+            "=" -> {
+                DynamicOperator.equals(left.toString(), right.toString())
             }
-            null -> value
-            else -> throw IllegalArgumentException("Unsupported term operator '${term.op?.text}'.")
-        }
-
-        return when (value) {
-            is Boolean -> value
-            is Number -> value.toDouble() != 0.0
-            is String -> value.toBoolean()
-            null -> false
-            else -> true
-        }
-    }
-
-    private fun visit(message: Message<*, *>, simple: FilterParser.SimpleContext): Any? {
-        return when (simple) {
-            is FilterParser.RestrictionExprContext -> {
-                visit(message, simple.restriction())
+            "!=" -> {
+                !DynamicOperator.equals(left.toString(), right.toString())
             }
-            is FilterParser.CompositeExprContext -> {
-                visit(message, simple.composite())
-            }
-            else -> throw UnsupportedOperationException("Unsupported simple expression '${simple.text}'.")
-        }
-    }
+            ":" -> {
+                if (right == "*") return true
 
-    private fun visit(message: Message<*, *>, rest: FilterParser.RestrictionContext): Any? {
-        val left = visit(message, rest.left)
-        return if (rest.op != null) {
-            when (rest.op.text) {
-                "<=", "<", ">", ">=" -> {
-                    val right = visit(message, rest.right)
-                    val result = DynamicOperator.compare(left?.toString(), right?.toString())
-                    when (rest.op.text) {
-                        "<=" -> result <= 0
-                        "<" -> result < 0
-                        ">=" -> result >= 0
-                        ">" -> result > 0
-                        else -> TODO()
-                    }
-                }
-                "=" -> {
-                    val right = visit(message, rest.right)
-                    DynamicOperator.equals(left?.toString(), right?.toString())
-                }
-                "!=" -> {
-                    val right = visit(message, rest.right)
-                    !DynamicOperator.equals(left?.toString(), right?.toString())
-                }
-                ":" -> {
-                    val right = visit(message, rest.right)?.toString()
-                    if (right == "*") return left != null
-
-                    when (left) {
-                        is Message<*, *> -> {
-                            right ?: return false
-                            left.has(right)
-                        }
-                        is List<*> -> left.any {
-                            DynamicOperator.equals(it?.toString(), right)
-                        }
-                        is Map<*, *> -> {
-                            right ?: return false
-                            left.containsKey(right)
-                        }
-                        else -> DynamicOperator.equals(left?.toString(), right)
-                    }
-                }
-                else -> TODO()
-            }
-        } else {
-            return left
-        }
-    }
-
-    private fun visit(message: Message<*, *>, com: FilterParser.ComparableContext): Any? {
-        return when (com) {
-            is FilterParser.FucntionExprContext -> visit(message, com.function())
-            is FilterParser.MemberExprContext -> visit(message, com.member())
-            else -> throw UnsupportedOperationException("Unsupported comparable expression '${com.text}'.")
-        }
-    }
-
-    private fun visit(message: Message<*, *>, com: FilterParser.CompositeContext): Any? {
-        return visit(message, com.expression())
-    }
-
-    private fun visit(message: Message<*, *>, com: FilterParser.FunctionContext): Any? {
-        val function = com.n.joinToString(".") { it.text }
-        return runtime.invoke(function, com.argList()?.e?.map { visit(message, it) } ?: listOf())
-    }
-
-    private fun visit(message: Message<*, *>, arg: FilterParser.ArgContext): Any? {
-        return when (arg) {
-            is FilterParser.ArgComparableExprContext -> visit(message, arg.comparable())
-            is FilterParser.ArgCompositeExprContext -> visit(message, arg.composite())
-            else -> throw UnsupportedOperationException("Unsupported arg expression '${arg.text}'.")
-        }
-    }
-
-    private fun visit(message: Message<*, *>, arg: FilterParser.MemberContext): Any? {
-        val memberStart = visit(message, arg.value())
-        return if (memberStart != null && message.support().fieldInfo(memberStart) != null) {
-            var value = message.get<Any?>(memberStart)
-
-            for (fieldContext in arg.e) {
-                val fieldName = visit(message, fieldContext)
-
-                when (value) {
+                when (left) {
                     is Message<*, *> -> {
-                        value = value.get<Any?>(fieldName).protoNormalizing() ?: return null
+                        left.has(right.toString())
                     }
-                    is List<*> -> {
-                        val int = fieldName.toIntOrNull() ?: return null
-                        if (int >= value.size) return null
-                        value = value[int]
+                    is List<*> -> left.any {
+                        DynamicOperator.equals(it?.toString(), right.toString())
                     }
                     is Map<*, *> -> {
-                        if (!value.containsKey(fieldName)) return null
-                        value = value[fieldName]
+                        left.containsKey(right)
                     }
-                    else -> return null
+                    else -> DynamicOperator.equals(left.toString(), right.toString())
                 }
             }
-
-            value
-        } else {
-            val value = mutableListOf(memberStart)
-            value += arg.e.map { visit(message, it) }
-            value.joinToString(".")
+            else -> TODO()
         }
     }
 
-    private fun visit(message: Message<*, *>, field: FilterParser.FieldContext): String {
-        return field.value()?.let { visit(message, it) } ?: field.text
+    private fun visit(message: Message<*, *>, member: FilterParser.MemberContext): Any? {
+        val field = member.names.firstOrNull()?.text ?: return null
+        var memberValue = message.get<Any?>(field)
+        for (i in 1 until member.names.size) {
+            val childFieldName = member.names[i].text
+            memberValue = when (memberValue) {
+                is Message<*, *> -> {
+                    memberValue.get<Any?>(childFieldName).protoNormalizing() ?: return null
+                }
+                is List<*> -> {
+                    val int = childFieldName.toIntOrNull() ?: return null
+                    if (int >= memberValue.size) return null
+                    memberValue[int]
+                }
+                is Map<*, *> -> {
+                    if (!memberValue.containsKey(childFieldName)) return null
+                    memberValue[childFieldName]
+                }
+                else -> return null
+            }
+        }
+        return memberValue
+    }
+
+    private fun visit(message: Message<*, *>, value: FilterParser.ValueContext): Any? {
+        value.member()?.let { return visit(message, it) }
+        value.literal()?.let { return visit(message, it) }
+        value.function()?.let { return visit(message, it) }
+        return null
+    }
+
+    private fun visit(message: Message<*, *>, literal: FilterParser.LiteralContext): Any? {
+        return when (literal) {
+            is FilterParser.IntContext -> literal.text.toLong()
+            is FilterParser.UintContext -> literal.text.substring(0, literal.text.length - 1).toULong()
+            is FilterParser.DoubleContext -> literal.text.toDouble()
+            is FilterParser.StringContext -> visit(literal)
+            is FilterParser.BoolTrueContext -> true
+            is FilterParser.BoolFalseContext -> false
+            is FilterParser.NullContext -> null
+            else -> throw UnsupportedOperationException("Unsupported literal expression '${literal.text}'.")
+        }
+    }
+
+    private fun visit(message: Message<*, *>, function: FilterParser.FunctionContext): Any? {
+        return runtime.invoke(function.text, function.argList().args)
+    }
+
+    private fun visit(value: FilterParser.StringContext): String {
+        val string = value.text
+        return when {
+            string.startsWith("\"") -> string.substring(1, string.length - 1)
+            string.startsWith("'") -> string.substring(1, string.length - 1)
+            else -> throw java.lang.IllegalStateException("Wrong string token '${value.text}'.")
+        }.unescape()
     }
 
     private fun Any?.protoNormalizing(): Any? {
@@ -255,28 +198,6 @@ class MessageFilter(filter: String, val runtime: FilterRuntime = FilterRuntime()
             is Int, is UInt, is Long, is ULong, is Float, is Double, is Boolean -> this.toString()
             is String, is Message<*, *> -> this
             else -> throw IllegalStateException("Illegal proto data type '${this.javaClass}'.")
-        }
-    }
-
-    private fun visit(message: Message<*, *>, value: FilterParser.ValueContext): String? {
-        if (value.STRING() != null) {
-            return string(value.text)
-        }
-
-        if (value.TEXT() != null) {
-            if (value.text == "null") return null
-            return value.text
-        }
-
-        return null
-    }
-
-    private fun string(data: String): String {
-        return when {
-            data.startsWith("\"\"\"") -> data.substring(3, data.length - 3)
-            data.startsWith("\"") -> data.substring(1, data.length - 1)
-            data.startsWith("'") -> data.substring(1, data.length - 1)
-            else -> throw IllegalStateException("Wrong string token '$data'.")
         }
     }
 }

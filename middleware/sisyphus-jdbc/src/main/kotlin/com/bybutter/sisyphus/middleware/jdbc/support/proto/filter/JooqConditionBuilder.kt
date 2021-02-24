@@ -3,10 +3,9 @@ package com.bybutter.sisyphus.middleware.jdbc.support.proto.filter
 import com.bybutter.sisyphus.dsl.filtering.FilterRuntime
 import com.bybutter.sisyphus.dsl.filtering.grammar.FilterParser
 import com.bybutter.sisyphus.string.unescape
+import java.lang.IllegalStateException
 import org.jooq.Condition
 import org.jooq.Field
-import org.jooq.impl.DSL
-import java.lang.IllegalStateException
 
 interface FilterExpressionValue<T> {
     val value: T
@@ -43,7 +42,7 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
 
     protected open fun visit(factor: FilterParser.FactorContext): Condition? {
         return factor.e.fold(visit(factor.init)) { cond, e ->
-            cond?.and(visit(e))
+            cond?.or(visit(e))
         }
     }
 
@@ -74,7 +73,7 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
     }
 
     protected open fun visit(function: FilterParser.FunctionContext): FilterExpressionValue<*>? {
-        TODO()
+        return runtime.invoke(function.text, function.argList().args)?.expressionValue()
     }
 
     protected open fun visit(literal: FilterParser.LiteralContext): FilterExpressionValue<*>? {
@@ -97,6 +96,17 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
             string.startsWith("'") -> string.substring(1, string.length - 1)
             else -> throw IllegalStateException("Wrong string token '${value.text}'.")
         }.unescape()
+    }
+
+    private fun Any.expressionValue(): FilterExpressionValue<*>? {
+        return when (this) {
+            is Int, is Long -> IntValue(this.toString().toLong())
+            is UInt, is ULong -> UIntValue(this.toString().toULong())
+            is Float, is Double -> FloatValue(this.toString().toDouble())
+            is Boolean -> BooleanValue(this)
+            is String -> StringValue(this)
+            else -> throw IllegalStateException("Illegal proto data type '${this?.javaClass}'.")
+        }
     }
 
     protected open fun buildCondition(field: Field<*>?, op: String, value: Any?): Condition? {
