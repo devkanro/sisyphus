@@ -2,6 +2,8 @@ package com.bybutter.sisyphus.middleware.jdbc.support.proto.filter
 
 import com.bybutter.sisyphus.dsl.filtering.FilterRuntime
 import com.bybutter.sisyphus.dsl.filtering.grammar.FilterParser
+import com.bybutter.sisyphus.protobuf.primitives.Duration
+import com.bybutter.sisyphus.protobuf.primitives.Timestamp
 import com.bybutter.sisyphus.string.unescape
 import java.lang.IllegalStateException
 import org.jooq.Condition
@@ -22,6 +24,14 @@ data class StringValue(override val value: String) : FilterExpressionValue<Strin
 data class BooleanValue(override val value: Boolean) : FilterExpressionValue<Boolean>
 
 data class FieldValue(override val value: Field<*>) : FilterExpressionValue<Field<*>>
+
+data class ByteArrayValue(override val value: ByteArray) : FilterExpressionValue<ByteArray>
+
+data class ListValue(override val value: List<*>) : FilterExpressionValue<List<*>>
+
+data class TimestampValue(override val value: Timestamp) : FilterExpressionValue<Timestamp>
+
+data class DurationValue(override val value: Duration) : FilterExpressionValue<Duration>
 
 abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()) {
     fun visit(filter: FilterParser.FilterContext): Condition? {
@@ -112,6 +122,10 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
             is Double -> FloatValue(this)
             is Boolean -> BooleanValue(this)
             is String -> StringValue(this)
+            is ByteArray -> ByteArrayValue(this)
+            is List<*> -> ListValue(this)
+            is Timestamp -> TimestampValue(this)
+            is Duration -> DurationValue(this)
             else -> throw IllegalStateException("Illegal proto data type '${this?.javaClass}'.")
         }
     }

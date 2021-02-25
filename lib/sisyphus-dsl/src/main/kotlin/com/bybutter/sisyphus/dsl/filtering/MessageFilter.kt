@@ -39,6 +39,14 @@ data class BooleanValue(override val value: Boolean) : FilterExpressionValue<Boo
 
 data class MessageValue(override val value: Message<*, *>) : FilterExpressionValue<Message<*, *>>
 
+data class ByteArrayValue(override val value: ByteArray) : FilterExpressionValue<ByteArray>
+
+data class ListValue(override val value: List<*>) : FilterExpressionValue<List<*>>
+
+data class TimestampValue(override val value: Timestamp) : FilterExpressionValue<Timestamp>
+
+data class DurationValue(override val value: Duration) : FilterExpressionValue<Duration>
+
 class MessageFilter(filter: String, val runtime: FilterRuntime = FilterRuntime()) : (Message<*, *>) -> Boolean {
     private val filter: FilterParser.FilterContext = FilterDsl.parse(filter)
 
@@ -202,6 +210,10 @@ class MessageFilter(filter: String, val runtime: FilterRuntime = FilterRuntime()
             is StringValue -> StringValue(this.value)
             is String -> StringValue(this)
             is Message<*, *> -> MessageValue(this)
+            is ByteArray -> ByteArrayValue(this)
+            is List<*> -> ListValue(this)
+            is Timestamp -> TimestampValue(this)
+            is Duration -> DurationValue(this)
             else -> throw java.lang.IllegalStateException("Illegal proto data type '${this?.javaClass}'.")
         }
     }
