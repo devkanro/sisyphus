@@ -33,7 +33,7 @@ data class TimestampValue(override val value: Timestamp) : FilterExpressionValue
 
 data class DurationValue(override val value: Duration) : FilterExpressionValue<Duration>
 
-abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()) {
+abstract class JooqConditionBuilder(private val runtime: FilterRuntime = FilterRuntime(FilterJooqLibrary())) {
     fun visit(filter: FilterParser.FilterContext): Condition? {
         return visit(filter.e ?: return null)
     }
@@ -126,6 +126,7 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
             is List<*> -> ListValue(this)
             is Timestamp -> TimestampValue(this)
             is Duration -> DurationValue(this)
+            is Field<*> -> FieldValue(this)
             else -> throw IllegalStateException("Illegal proto data type '${this?.javaClass}'.")
         }
     }

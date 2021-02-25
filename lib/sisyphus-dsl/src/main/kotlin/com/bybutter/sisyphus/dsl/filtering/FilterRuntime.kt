@@ -1,6 +1,5 @@
 package com.bybutter.sisyphus.dsl.filtering
 
-import com.bybutter.sisyphus.dsl.cel.CelStandardLibrary
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -10,7 +9,7 @@ import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaMethod
 
-class FilterRuntime(private val std: CelStandardLibrary = CelStandardLibrary()) {
+class FilterRuntime(private val std: FilterStandardLibrary = FilterStandardLibrary()) {
 
     private val memberFunctions = mutableMapOf<String, MutableList<KFunction<*>>>()
 
