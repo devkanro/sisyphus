@@ -73,7 +73,11 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
     }
 
     protected open fun visit(function: FilterParser.FunctionContext): FilterExpressionValue<*>? {
-        return runtime.invoke(function.text, function.argList().args)?.expressionValue()
+        return runtime.invoke(function.name.text, visit(function.argList()).map { it.value })?.expressionValue()
+    }
+
+    protected open fun visit(argList: FilterParser.ArgListContext): List<FilterExpressionValue<*>> {
+        return argList.args.mapNotNull { visit(it) }
     }
 
     protected open fun visit(literal: FilterParser.LiteralContext): FilterExpressionValue<*>? {

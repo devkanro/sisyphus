@@ -151,7 +151,11 @@ class MessageFilter(filter: String, val runtime: FilterRuntime = FilterRuntime()
     }
 
     private fun visit(message: Message<*, *>, function: FilterParser.FunctionContext): Any? {
-        return runtime.invoke(function.text, function.argList().args)
+        return runtime.invoke(function.name.text, visit(message,function.argList()))
+    }
+
+    private fun visit(message: Message<*, *>, argList: FilterParser.ArgListContext): List<Any> {
+        return argList.args.mapNotNull { visit(message, it) }
     }
 
     private fun visit(value: FilterParser.StringContext): String {
