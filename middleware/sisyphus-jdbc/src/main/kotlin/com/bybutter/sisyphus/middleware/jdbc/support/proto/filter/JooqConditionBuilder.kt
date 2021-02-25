@@ -104,9 +104,12 @@ abstract class JooqConditionBuilder(val runtime: FilterRuntime = FilterRuntime()
 
     private fun Any.expressionValue(): FilterExpressionValue<*>? {
         return when (this) {
-            is Int, is Long -> IntValue(this.toString().toLong())
-            is UInt, is ULong -> UIntValue(this.toString().toULong())
-            is Float, is Double -> FloatValue(this.toString().toDouble())
+            is Int -> IntValue(this.toLong())
+            is Long -> IntValue(this)
+            is UInt -> UIntValue(this.toULong())
+            is ULong -> UIntValue(this)
+            is Float -> FloatValue(this.toDouble())
+            is Double -> FloatValue(this)
             is Boolean -> BooleanValue(this)
             is String -> StringValue(this)
             else -> throw IllegalStateException("Illegal proto data type '${this?.javaClass}'.")
