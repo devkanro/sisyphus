@@ -44,13 +44,15 @@ member
     ;
 
 literal
-    : sign=MINUS? tok=NUM_INT   # Int
-    | tok=NUM_UINT  # Uint
-    | sign=MINUS? tok=NUM_FLOAT # Double
+    : sign=MINUS? tok=NUM_INT duration='s'?   # Int
+    | tok=NUM_UINT # Uint
+    | sign=MINUS? tok=NUM_FLOAT  duration='s'? # Double
     | tok=STRING    # String
     | tok='true'    # BoolTrue
     | tok='false'   # BoolFalse
     | tok='null'    # Null
+    | tok=DURATION # Duration
+    | tok=TIMESTAMP # Timestamp
     ;
 
 comparator
@@ -147,6 +149,15 @@ NUM_UINT
 STRING
   : '"' (ESC_SEQ | ~('\\'|'"'|'\n'|'\r'))* '"'
   | '\'' (ESC_SEQ | ~('\\'|'\''|'\n'|'\r'))* '\''
+  ;
+
+DURATION
+  : NUM_INT 's'
+  | NUM_FLOAT 's'
+  ;
+
+TIMESTAMP
+  : NUM_INT '-' NUM_INT '-' NUM_INT 'T' NUM_INT ':' NUM_INT ':' (NUM_INT | NUM_FLOAT) 'Z'
   ;
 
 IDENTIFIER : (LETTER | '_') ( LETTER | DIGIT | '_')*;
