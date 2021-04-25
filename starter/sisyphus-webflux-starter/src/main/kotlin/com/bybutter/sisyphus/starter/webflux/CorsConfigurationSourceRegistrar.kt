@@ -1,6 +1,6 @@
 package com.bybutter.sisyphus.starter.webflux
 
-import com.bybutter.sisyphus.spring.BeanUtils
+import com.bybutter.sisyphusx.spring.BeanUtils
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.support.BeanDefinitionBuilder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry

@@ -9,6 +9,6 @@ description = "Middleware for using RocketMQ in Sisyphus Project"
 dependencies {
     implementation(project(":lib:sisyphus-common"))
 
-    api(Dependencies.rocketMq)
-    implementation(Dependencies.rocketMqAcl)
+    api("org.apache.rocketmq:rocketmq-client")
+    implementation("org.apache.rocketmq:rocketmq-acl")
 }

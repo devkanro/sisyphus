@@ -9,5 +9,5 @@ description = "Middleware for grpc service discovery of kubernetes in Sisyphus P
 dependencies {
     api(project(":middleware:sisyphus-grpc-client"))
     api(project(":lib:sisyphus-jackson"))
-    implementation(Dependencies.kubeJavaClient)
+    implementation("io.kubernetes:client-java")
 }

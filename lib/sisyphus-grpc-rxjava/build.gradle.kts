@@ -11,8 +11,7 @@ dependencies {
     api(project(":lib:sisyphus-grpc"))
     api("com.salesforce.servicelibs:rxgrpc-stub")
 
-    proto(platform(project(":sisyphus-dependencies")))
-    proto(Dependencies.Proto.grpcProto)
+    proto("com.google.api.grpc:proto-google-common-protos")
 }
 
 protobuf {

@@ -8,11 +8,11 @@ description = "Proto compiler for Sisyphus customized Protobuf runtime"
 
 dependencies {
     api(project(":lib:sisyphus-common"))
-    api(Dependencies.Kotlin.poet)
-    api(Dependencies.Proto.base)
+    api("com.squareup:kotlinpoet")
+    api("com.google.protobuf:protobuf-java")
 
-    implementation(Dependencies.protoc)
-    implementation(Dependencies.Proto.grpcProto)
+    implementation("com.github.os72:protoc-jar")
+    implementation("com.google.api.grpc:proto-google-common-protos")
     implementation("com.google.api:api-common")
 
     implementation("io.reactivex.rxjava2:rxjava")

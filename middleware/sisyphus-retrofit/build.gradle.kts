@@ -7,11 +7,10 @@ plugins {
 description = "Middleware for using Retrofit in Sisyphus Project"
 
 dependencies {
-    api(Dependencies.Kotlin.Coroutines.jdk)
-    api(Dependencies.retrofit)
-    api(Dependencies.okhttp)
-    api(Dependencies.reflections)
-    api(Dependencies.resilience4j)
+    api("com.squareup.retrofit2:retrofit")
+    api("com.squareup.okhttp3:okhttp")
+    api("org.reflections:reflections")
+    api("io.github.resilience4j:resilience4j-retrofit")
     api(project(":lib:sisyphus-common"))
     api(project(":lib:sisyphus-dto"))
     api(project(":lib:sisyphus-jackson"))

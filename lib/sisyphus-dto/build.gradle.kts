@@ -8,9 +8,10 @@ description = "Easy to create struct in Sisyphus"
 
 dependencies {
     compileOnly(project(":lib:sisyphus-jackson"))
-    implementation(project(":lib:sisyphus-common"))
+    compileOnly("org.jetbrains.kotlin:kotlin-reflect")
 
-    implementation(Dependencies.Kotlin.reflect)
+    implementation(project(":lib:sisyphus-common"))
+    implementation(project(":extension:sisyphusx-reflect"))
 
     testImplementation("org.junit.jupiter:junit-jupiter")
 }

@@ -9,8 +9,8 @@ plugins {
 description = "Plugin for easy configuring Gradle and plugins in Sisyphus Framework"
 
 dependencies {
-    implementation(Dependencies.Kotlin.reflect)
-    implementation(Dependencies.Kotlin.plugin)
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
 
     compileOnly("com.netflix.nebula:nebula-publishing-plugin")
     compileOnly("com.netflix.nebula:gradle-info-plugin")

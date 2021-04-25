@@ -16,9 +16,7 @@ dependencies {
 
     compileOnly("com.android.tools.build:gradle")
 
-    implementation(Dependencies.Kotlin.reflect)
-    implementation(Dependencies.Kotlin.plugin)
-    implementation(Dependencies.Proto.apiCompiler)
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
 }
 
 gradlePlugin {

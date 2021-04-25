@@ -10,13 +10,10 @@ import com.bybutter.sisyphus.protobuf.primitives.Value
 import com.bybutter.sisyphus.protobuf.primitives.internal.MutableStruct
 import com.bybutter.sisyphus.protobuf.primitives.invoke
 import com.bybutter.sisyphus.security.base64Decode
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.companionObjectInstance
-import kotlin.reflect.full.isSubclassOf
 
 interface PatcherNode {
-    fun asField(field: FieldDescriptorProto, property: KProperty<*>): Any?
+    fun asField(message: MutableMessage<*, *>, field: FieldDescriptorProto): Any?
 
     fun asVaule(): Value
 }
@@ -32,7 +29,7 @@ class ValueNode : PatcherNode {
         values.addAll(value)
     }
 
-    override fun asField(field: FieldDescriptorProto, property: KProperty<*>): Any? {
+    override fun asField(message: MutableMessage<*, *>, field: FieldDescriptorProto): Any? {
         var result = when (field.type) {
             FieldDescriptorProto.Type.DOUBLE -> values.map { it.toDouble() }
             FieldDescriptorProto.Type.FLOAT -> values.map { it.toFloat() }
@@ -65,18 +62,6 @@ class ValueNode : PatcherNode {
                 }
             }
             else -> throw IllegalStateException()
-        }
-
-        val propertyType = if (field.label == FieldDescriptorProto.Label.REPEATED) {
-            property.returnType.arguments.first().type?.classifier as? KClass<*>
-        } else {
-            property.returnType.classifier as? KClass<*>
-        }
-        if (propertyType != null && propertyType.isSubclassOf(CustomProtoType::class)) {
-            result = result.map {
-                val support = (propertyType.companionObjectInstance as CustomProtoTypeSupport<*, Any>)
-                support(it)
-            }
         }
 
         return when (field.label) {
@@ -168,20 +153,20 @@ class MessagePatcher : PatcherNode {
         }
 
         for ((field, value) in nodes) {
-            if (message.getProperty(field) == null) {
+            if (message.fieldDescriptorOrNull(field) == null) {
                 continue
             }
 
             if (value is MessagePatcher && message.has(field)) {
                 value.applyTo(message[field])
             } else {
-                message[field] = value.asField(message.fieldDescriptor(field), message.getProperty(field)!!)
+                message[field] = value.asField(message, message.fieldDescriptor(field))
             }
         }
     }
 
     @OptIn(InternalProtoApi::class)
-    override fun asField(field: FieldDescriptorProto, property: KProperty<*>): Any? {
+    override fun asField(message: MutableMessage<*, *>, field: FieldDescriptorProto): Any? {
         return when (field.type) {
             FieldDescriptorProto.Type.MESSAGE -> {
                 asMessage(field.typeName)

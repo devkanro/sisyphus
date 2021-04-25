@@ -8,7 +8,7 @@ description = "Starter for configuring HttpMessageEncoder with Jackson in Sisyph
 
 dependencies {
     api(project(":lib:sisyphus-jackson"))
-    api(Dependencies.Spring.Boot.jackson)
-    compileOnly(Dependencies.Jackson.Dataformat.cbor)
-    compileOnly(Dependencies.Jackson.Dataformat.smile)
+    api("org.springframework.boot:spring-boot-starter-json")
+    compileOnly("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
+    compileOnly("com.fasterxml.jackson.dataformat:jackson-dataformat-smile")
 }

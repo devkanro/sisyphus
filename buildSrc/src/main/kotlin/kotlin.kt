@@ -12,9 +12,7 @@ val Project.kotlin: Project
         }
 
         dependencies {
-            add("api", Dependencies.Kotlin.stdlib)
-            add("api", Dependencies.Kotlin.reflect)
-            add("api", Dependencies.Kotlin.Coroutines.core)
+            "compileOnly"("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         }
 
         tasks.withType<KotlinCompile> {

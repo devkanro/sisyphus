@@ -1,4 +1,4 @@
-package com.bybutter.sisyphus.coroutine
+package com.bybutter.sisyphusx.coroutine
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

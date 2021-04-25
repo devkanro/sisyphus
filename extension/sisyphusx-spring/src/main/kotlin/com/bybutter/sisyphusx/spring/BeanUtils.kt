@@ -1,4 +1,4 @@
-package com.bybutter.sisyphus.spring
+package com.bybutter.sisyphusx.spring
 
 import org.springframework.beans.factory.ListableBeanFactory
 import org.springframework.beans.factory.config.BeanDefinition

@@ -9,11 +9,10 @@ description = "Sisyphus customized gRPC runtime"
 
 dependencies {
     api(project(":lib:sisyphus-protobuf"))
-    api(Dependencies.Grpc.api)
+    api("io.grpc:grpc-api")
     api("com.google.api:api-common")
 
-    proto(platform(project(":sisyphus-dependencies")))
-    proto(Dependencies.Proto.grpcProto)
+    proto("com.google.api.grpc:proto-google-common-protos")
 }
 
 protobuf {

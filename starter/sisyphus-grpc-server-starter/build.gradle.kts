@@ -10,8 +10,8 @@ description = "Starter for building gRPC server in Sisyphus Framework"
 dependencies {
     api(project(":middleware:sisyphus-grpc-client"))
     api(project(":middleware:sisyphus-configuration-artifact"))
-    compileOnly(Dependencies.Spring.Boot.actuator)
-    runtimeOnly(Dependencies.Grpc.netty)
+    compileOnly("org.springframework.boot:spring-boot-starter-actuator")
+    runtimeOnly("io.grpc:grpc-netty")
 }
 
 protobuf {

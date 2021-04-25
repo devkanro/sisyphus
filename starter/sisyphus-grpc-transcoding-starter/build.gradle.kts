@@ -12,6 +12,6 @@ dependencies {
     api(project(":middleware:sisyphus-configuration-artifact"))
     api(project(":starter:sisyphus-grpc-server-starter"))
     api(project(":starter:sisyphus-webflux-starter"))
-    implementation(Dependencies.swagger)
-    compileOnly(Dependencies.Spring.Boot.actuator)
+    implementation("io.swagger.core.v3:swagger-core")
+    compileOnly("org.springframework.boot:spring-boot-starter-actuator")
 }

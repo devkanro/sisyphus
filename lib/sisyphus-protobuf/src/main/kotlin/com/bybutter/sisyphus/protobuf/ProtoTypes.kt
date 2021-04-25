@@ -13,6 +13,10 @@ object ProtoTypes {
         }
     }
 
+    fun guessSupportForClass(clazz: Class<*>) {
+
+    }
+
     fun register(support: MessageSupport<*, *>) {
         support.register()
         protoToSupportMap[support.name] = support

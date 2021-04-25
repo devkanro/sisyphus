@@ -8,5 +8,5 @@ description = "Starter for build application with String Webflux in Sisyphus Fra
 
 dependencies {
     api(project(":starter:sisyphus-jackson-starter"))
-    api(Dependencies.Spring.Boot.webflux)
+    api("org.springframework.boot:spring-boot-starter-webflux")
 }

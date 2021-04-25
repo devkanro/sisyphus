@@ -2,7 +2,7 @@ package com.bybutter.sisyphus.starter.grpc
 
 import com.bybutter.sisyphus.longrunning.OperationSupport
 import com.bybutter.sisyphus.middleware.grpc.RpcServiceImpl
-import com.bybutter.sisyphus.spring.BeanUtils
+import com.bybutter.sisyphusx.spring.BeanUtils
 import com.bybutter.sisyphus.starter.grpc.support.operation.Operations
 import com.bybutter.sisyphus.starter.grpc.support.reflection.ReflectionService
 import com.bybutter.sisyphus.starter.grpc.support.reflection.ReflectionServiceAlpha

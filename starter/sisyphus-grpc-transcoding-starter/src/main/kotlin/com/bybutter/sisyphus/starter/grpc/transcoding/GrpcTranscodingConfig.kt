@@ -1,6 +1,6 @@
 package com.bybutter.sisyphus.starter.grpc.transcoding
 
-import com.bybutter.sisyphus.spring.BeanUtils
+import com.bybutter.sisyphusx.spring.BeanUtils
 import com.bybutter.sisyphus.starter.grpc.ServiceRegistrar
 import com.bybutter.sisyphus.starter.grpc.transcoding.support.swagger.SwaggerProperty
 import com.bybutter.sisyphus.starter.grpc.transcoding.support.swagger.SwaggerRouterFunction

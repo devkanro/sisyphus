@@ -28,15 +28,10 @@ val Project.next: Project
         pluginManager.apply(IdeaPlugin::class.java)
         pluginManager.apply(VersionsPlugin::class.java)
 
-        java.kotlin.managedDependencies
+        java.kotlin
 
         tasks.withType<Test> {
             useJUnitPlatform()
-        }
-
-        tasks.withType<JavaCompile> {
-            sourceCompatibility = JavaVersion.VERSION_1_8.majorVersion
-            targetCompatibility = JavaVersion.VERSION_1_8.majorVersion
         }
         return this
     }
@@ -48,7 +43,7 @@ val Project.middleware: Project
         group = "com.bybutter.sisyphus.middleware"
 
         dependencies {
-            "api"(Dependencies.Spring.Boot.boot)
+            "api"("org.springframework.boot:spring-boot-starter")
         }
         return this
     }
@@ -58,6 +53,14 @@ val Project.lib: Project
         next
 
         group = "com.bybutter.sisyphus"
+        return this
+    }
+
+val Project.extension: Project
+    get() {
+        next
+
+        group = "com.bybutter.sisyphusx"
         return this
     }
 
@@ -80,8 +83,8 @@ val Project.starter: Project
         group = "com.bybutter.sisyphus.starter"
 
         dependencies {
-            "api"(Dependencies.Spring.Boot.boot)
-            "testImplementation"(Dependencies.Spring.Boot.test)
+            "api"("org.springframework.boot:spring-boot-starter")
+            "testImplementation"("org.springframework.boot:spring-boot-starter-test")
         }
         return this
     }

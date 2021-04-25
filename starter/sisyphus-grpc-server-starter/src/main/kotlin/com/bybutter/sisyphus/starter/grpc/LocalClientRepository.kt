@@ -7,7 +7,7 @@ import com.bybutter.sisyphus.middleware.grpc.ClientRepository
 import com.bybutter.sisyphus.middleware.grpc.ManagedChannelLifecycle
 import com.bybutter.sisyphus.middleware.grpc.RpcServiceImpl
 import com.bybutter.sisyphus.rpc.CallOptionsInterceptor
-import com.bybutter.sisyphus.spring.BeanUtils
+import com.bybutter.sisyphusx.spring.BeanUtils
 import io.grpc.CallOptions
 import io.grpc.Channel
 import io.grpc.ClientInterceptor

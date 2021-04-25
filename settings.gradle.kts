@@ -12,6 +12,10 @@ include("lib:sisyphus-grpc-coroutine")
 include("lib:sisyphus-grpc-rxjava")
 include("lib:sisyphus-test")
 
+include("extension:sisyphusx-coroutine")
+include("extension:sisyphusx-reflect")
+include("extension:sisyphusx-spring")
+
 include("tools:sisyphus-protoc")
 include("tools:sisyphus-project-gradle-plugin")
 include("tools:sisyphus-protobuf-gradle-plugin")

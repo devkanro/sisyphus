@@ -10,8 +10,7 @@ description = "Sisyphus customized Protobuf runtime for Kotlin"
 dependencies {
     api(project(":lib:sisyphus-common"))
 
-    proto(platform(project(":sisyphus-dependencies")))
-    proto(Dependencies.Proto.base)
+    proto("com.google.protobuf:protobuf-java")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation(project(":lib:sisyphus-grpc"))

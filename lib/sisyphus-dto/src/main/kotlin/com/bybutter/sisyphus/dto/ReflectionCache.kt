@@ -1,7 +1,7 @@
 package com.bybutter.sisyphus.dto
 
 import com.bybutter.sisyphus.reflect.SimpleType
-import com.bybutter.sisyphus.reflect.allProperties
+import com.bybutter.sisyphusx.reflect.allProperties
 import java.lang.reflect.Method
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1

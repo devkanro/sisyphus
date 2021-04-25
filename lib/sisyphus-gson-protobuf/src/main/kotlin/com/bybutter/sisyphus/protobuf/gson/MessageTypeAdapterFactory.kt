@@ -9,7 +9,6 @@ import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
-import kotlin.reflect.full.companionObjectInstance
 
 object MessageTypeAdapterFactory : TypeAdapterFactory {
     override fun <T : Any?> create(p0: Gson, p1: TypeToken<T>): TypeAdapter<T>? {

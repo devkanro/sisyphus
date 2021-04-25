@@ -11,5 +11,5 @@ dependencies {
     api(project(":lib:sisyphus-grpc-coroutine"))
     api(project(":lib:sisyphus-common"))
     api(project(":starter:sisyphus-webflux-starter"))
-    implementation(Dependencies.Grpc.stub)
+    implementation("io.grpc:grpc-stub")
 }
