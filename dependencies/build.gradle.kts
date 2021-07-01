@@ -14,14 +14,14 @@ javaPlatform {
 dependencies {
     api(platform(project(":sisyphus-bom")))
     api(platform("com.google.protobuf:protobuf-bom:3.17.3"))
-    api(platform("io.grpc:grpc-bom:1.38.1"))
-    api(platform("io.micrometer:micrometer-bom:1.7.0"))
+    api(platform("io.grpc:grpc-bom:1.39.0"))
+    api(platform("io.micrometer:micrometer-bom:1.7.1"))
     api(platform("org.apache.maven:maven:3.8.1"))
-    api(platform("org.apache.rocketmq:rocketmq-all:4.9.0"))
+    api(platform("org.apache.rocketmq:rocketmq-all:4.8.0"))
     api(platform("org.jetbrains.kotlin:kotlin-bom:1.5.10"))
     api(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.5.0"))
     api(platform("org.junit:junit-bom:5.7.2"))
-    api(platform("org.springframework.boot:spring-boot-dependencies:2.5.1"))
+    api(platform("org.springframework.boot:spring-boot-dependencies:2.5.2"))
     api(platform("com.fasterxml.jackson:jackson-bom:2.12.3"))
 
     constraints {
@@ -48,7 +48,7 @@ dependencies {
         api("io.github.resilience4j:resilience4j-retrofit:1.7.0")
         api("io.grpc:grpc-kotlin-stub:1.1.0")
         api("io.kubernetes:client-java:12.0.1")
-        api("io.swagger.core.v3:swagger-core:2.1.9")
+        api("io.swagger.core.v3:swagger-core:2.1.10")
         api("org.antlr:antlr4:4.9.2")
         api("org.apache.maven.wagon:wagon-http:3.4.3")
         api("org.eclipse.jgit:org.eclipse.jgit:5.12.0.202106070339-r")
@@ -59,6 +59,6 @@ dependencies {
         api("org.jooq:jooq:3.14.11")
         api("org.mongodb:mongodb-driver-reactivestreams:4.2.3")
         api("org.reflections:reflections:0.9.12")
-        api("org.springframework.boot:spring-boot-gradle-plugin:2.5.1")
+        api("org.springframework.boot:spring-boot-gradle-plugin:2.5.2")
     }
 }
